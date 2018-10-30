@@ -8,17 +8,6 @@ class Technology(models.Model):
     def __str__(self):
         return self.name
 
-class Application(models.Model):
-    short_name = models.CharField(max_length=30, null=True, unique=True)
-    name = models.CharField(max_length=100, unique=True)
-    description = models.CharField(max_length=500, null=True)
-    owner_name = models.CharField(max_length=255, null=True)
-    contact_email = models.CharField(max_length=255, null=True)
-    is_bi = models.CharField(max_length=1)
-
-    def __str__(self):
-        return self.name
-
 class Entity(models.Model):
     short_name = models.CharField(max_length=30, null=True)
     name = models.CharField(max_length=100)
@@ -34,13 +23,22 @@ class Entity(models.Model):
         return self.name
 
 class Node(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=255, unique=True)
+    display_name = models.CharField(max_length=100, null=True)
     description = models.CharField(max_length=500, null=True)
     entity = models.ForeignKey(Entity, on_delete=models.CASCADE)
-    application = models.ForeignKey(Application, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = (('name', 'entity', 'application'),)
+        unique_together = (('name', 'entity'),)
+
+    def __str__(self):
+        return self.name
+
+class Application(models.Model):
+    node = models.OneToOneField(Node, on_delete=models.CASCADE, primary_key=True)
+    owner_name = models.CharField(max_length=255, null=True)
+    contact_email = models.CharField(max_length=255, null=True)
+    is_bi = models.CharField(max_length=1)
 
     def __str__(self):
         return self.name
