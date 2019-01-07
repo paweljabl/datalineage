@@ -1,0 +1,23 @@
+{% extends 'datalin/base.html' %}
+
+{% block title %} List of technologies applied in Volvo BI{% endblock title %}
+{% block content %}
+    {% if technology_list %}
+         <table class="w3-table w3-bordered w3-striped">
+            <tr class="w3-teal">
+              <th>Short Name</th>
+              <th>Name</th>
+              <th>Provider</th>
+            </tr>
+            {% for technology in technology_list %}
+             <tr>
+              <td>{{ technology.short_name }}</td>
+              <td>{{ technology.name }}</td>
+              <td>{{ technology.provider }}</td>
+            </tr>
+            {% endfor %}
+         </table>
+    {% else %}
+        <p>No technologies are available.</p>
+    {% endif %}
+{% endblock content%}

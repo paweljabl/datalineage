@@ -1,0 +1,55 @@
+{% extends 'datalin/base.html' %}
+
+{% block title %}Node form{% endblock title %}
+{% block content %}
+<form class="w3-container" method="post" id="nodeForm" data-entities-url="{% url 'ajax_load_entities' %}" >
+    {% csrf_token %}
+
+
+    <div class="w3-cell-row" style="width:75%">
+        <div class="w3-container w3-cell" id="div_node">
+            <select id="id_technology" class="w3-select" name="technology" required="">
+                <option value="" disabled selected>First choose technology</option>
+                {% for x,y in form.fields.technology.choices %}
+                <option value="{{ x }}" {% if form.fields.technology.value == x %} selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+
+            <p>
+                <select id="id_entity" class="w3-select" name="entity" required="">
+                    <option value="" disabled selected>Next choose entity</option>
+                    {% for x,y in form.fields.entity.choices %}
+                    <option value="{{ x }}" {% if form.fields.entity.value == x %} selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+            </p>
+
+            <p>
+                <label for="id_name" class="w3-text-teal"><b>Node name</b></label>
+                <input class="w3-input w3-border w3-light-grey" type="text" name="name" maxlength="255" required=""
+                       id="id_name">
+            </p>
+
+            <p>
+                <label for="id_display_name" class="w3-text-teal"><b>Node display name</b></label>
+                <input class="w3-input w3-border w3-light-grey" type="text" name="display_name" maxlength="100"
+                       id="id_display_name">
+            </p>
+
+            <p>
+                <label for="id_description" class="w3-text-teal"><b>Description</b></label>
+                <input class="w3-input w3-border w3-light-grey" type="text" name="description" maxlength="100"
+                       id="id_description">
+            </p>
+
+
+            <button type="submit" class="w3-btn w3-teal" value="Register">Save</button>
+        </div>
+
+
+    </div>
+
+</form>
+
+
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends 'datalin/base.html' %}
+
+{% block content %}
+    {% block title %} Add new node {% endblock title %}
+    <form method="POST" class="post-form">
+        {% csrf_token %}
+
+
+
+        {{ form.as_p }}
+
+        <button type="submit" class="save btn btn-default">Save</button>
+    </form>
+{% endblock %}

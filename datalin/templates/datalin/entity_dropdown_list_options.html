@@ -1,0 +1,4 @@
+<option value="" disabled selected>Next choose entity</option>
+{% for entity in entities %}
+<option value="{{ entity.pk }}">{{ entity.name }}</option>
+{% endfor %}

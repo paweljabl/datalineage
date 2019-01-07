@@ -1,0 +1,156 @@
+{% extends 'datalin/base.html' %}
+
+{% block title %}Node form{% endblock title %}
+{% block content %}
+<form class="w3-container" method="POST" id="nodeForm" data-entities-url="{% url 'ajax_load_entities' %}" >
+    {% csrf_token %}
+
+    <div class="w3-container w3-cell w3-text-teal">
+        <input class="w3-radio" type="radio" name="is_application" id="is_application_Y" value="Y" checked>
+        <label>Application</label></p>
+    </div>
+
+    <div class="w3-container w3-cell w3-text-teal">
+        <input class="w3-radio" type="radio" name="is_application" id="is_application_N" value="N">
+        <label>Technical</label></p>
+    </div>
+
+    <div class="w3-cell-row" style="width:75%">
+        <div class="w3-container w3-cell" id="div_node">
+            <select id="id_technology" class="w3-select w3-hide" name="technology" required="">
+                <option value="" disabled selected>First choose technology</option>
+                {% for x,y in node_form.fields.technology.choices %}
+                <option value="{{ x }}" {% if node_form.fields.technology.value == x %} selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+
+            <p>
+                <select id="id_entity" class="w3-select w3-hide" name="entity" required="">
+                    <option value="" disabled selected>Next choose entity</option>
+                    {% for x,y in node_form.fields.entity.choices %}
+                    <option value="{{ x }}" {% if node_form.fields.entity.value == x %} selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+            </p>
+
+            <p>
+                <label for="id_name" class="w3-text-teal"><b>Node name</b></label>
+                <input class="w3-input w3-border w3-light-grey" type="text" name="name" maxlength="255" required=""
+                       id="id_name">
+            </p>
+
+            <p>
+                <label for="id_display_name" class="w3-text-teal"><b>Node display name</b></label>
+                <input class="w3-input w3-border w3-light-grey" type="text" name="display_name" maxlength="100"
+                       required=""
+                       id="id_display_name">
+            </p>
+
+            <p>
+                <label for="id_description" class="w3-text-teal"><b>Description</b></label>
+                <input class="w3-input w3-border w3-light-grey" type="text" name="description" maxlength="100"
+                       required=""
+                       id="id_description">
+            </p>
+
+
+            <button type="submit" class="w3-btn w3-teal" id="submit">Save</button>
+        </div>
+
+        <div class="w3-container w3-cell" id="div_application">
+            <p>
+                <label for="id_owner_name" class="w3-text-teal"><b>Owner name</b></label>
+                <input class="w3-input w3-border w3-light-grey" type="text" name="owner_name" maxlength="100"
+                       id="id_owner_name" required="">
+            </p>
+            <p>
+                <label for="id_contact_email" class="w3-text-teal"><b>Contact email</b></label>
+                <input class="w3-input w3-border w3-light-grey" type="email" name="contact_email" maxlength="100"
+                       id="id_contact_email" required="">
+            </p>
+            <p>
+                <label for="id_is_bi_C" class="w3-text-teal"><b>Is BI application?</b></label>
+                <input class="w3-check" type="checkbox" name="is_bi_c" id="id_is_bi_c">
+            </p>
+            <p>
+                <input class="w3-input w3-border w3-light-grey w3-hide" type="text" name="is_bi"
+                       maxlength="1" id="id_is_bi">
+            </p>
+            <p>
+                <label for="id_is_bi" class="w3-text-teal"><b>BI application?</b></label>
+                <input class="w3-input w3-border w3-light-grey" type="text" name="is_bi" maxlength="100"
+                       required=""
+                       id="id_is_bi">
+            </p>
+
+        </div>
+    </div>
+
+</form>
+
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script>
+    $(document).ready(function(){
+
+        var id_entity_app = $('#id_entity option').filter(function () { return $(this).html() == "Application"; }).val();
+        $("#id_entity").val(id_entity_app);
+        /*
+        $("#id_entity option").each(function()
+        {
+            console.log($(this).val());
+            console.log('|' + $(this).html() + '|');
+        });
+        */
+
+        $('input[type=radio][name=is_application]').change(function () {
+            if($("#is_application_Y").prop("checked")) {
+              $("#id_technology").addClass('w3-hide');
+              $("#id_entity").addClass('w3-hide');
+              $("#id_entity").val(id_entity_app);
+              $("#div_application").removeClass('w3-hide');
+            } else if($("#is_application_N").prop("checked")) {
+              $("#id_entity").val("");
+              $("#id_technology").removeClass('w3-hide');
+              $("#id_entity").removeClass('w3-hide');
+              $("#div_application").addClass('w3-hide');
+            }
+        });
+
+
+        $("#id_technology").change(function () {
+          var url = $("#nodeForm").attr("data-entities-url");  // get the url of the `load_entities` view
+          var technologyId = $(this).val();  // get the selected technology ID from the HTML input
+
+          $.ajax({                       // initialize an AJAX request
+            url: url,                    // set the url of the request (= localhost:8000/ajax/load-entities/)
+            data: {
+              'technology': technologyId       // add the technology id to the GET parameters
+            },
+            success: function (data) {   // `data` is the return of the `load_entities` view function
+              console.log(data)
+              $("#id_entity").html(data);  // replace the contents of the entity input with the data that came from the server
+            }
+          });
+
+        });
+
+        $('#submit').on("click",function() {
+//         $("#id_entity").val(id_entity_app);
+//         $("#id_technology").val("1");
+//          console.log("id_is_bi:" + $("#id_is_bi").prop("checked"))
+            console.log($("#id_technology").val());
+            console.log($("#id_entity").val());
+//          if( $("#id_is_bi_c").prop("checked") ) {
+//            $("#id_is_bi").val("Y");
+//          } else {
+//            $("#id_is_bi").val("N");
+//          }
+        });
+
+    });
+
+
+
+</script>
+
+{% endblock %}

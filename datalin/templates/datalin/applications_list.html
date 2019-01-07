@@ -1,0 +1,13 @@
+{% extends 'datalin/base.html' %}
+
+{% block content %}
+    {% if application_list %}
+        <ul>
+        {% for application in application_list %}
+            <li>{{ application.name }}</li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No applications are available.</p>
+    {% endif %}
+{% endblock %}

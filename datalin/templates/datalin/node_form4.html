@@ -1,0 +1,80 @@
+{% extends 'datalin/base.html' %}
+
+{% block title %} Nodes {% endblock title %}
+{% block content %}
+<form action="" method="post">
+    {% csrf_token %}
+       <p><label for="id_technology">Technology:</label> <select name="technology" id="id_technology">
+  <option value="7">QlikView</option>
+
+  <option value="8">Qlik Sense</option>
+
+  <option value="9">Lumira</option>
+
+  <option value="10">Power BI</option>
+
+  <option value="1">Netezza</option>
+
+  <option value="2">Business Objects</option>
+
+  <option value="3">SQL Server</option>
+
+  <option value="4">SQL Server Reporting Services</option>
+
+  <option value="5">SQL Server Analysis Services</option>
+
+  <option value="6">Oracle Database</option>
+
+</select></p>
+<p><label for="id_entity">Entity:</label> <select name="entity" class="w3-select" required="" id="id_entity">
+  <option value="" selected="">---------</option>
+
+  <option value="1">Database</option>
+
+  <option value="2">Table</option>
+
+  <option value="3">View</option>
+
+  <option value="4">Stored Procedure</option>
+
+  <option value="5">Universe 3.X</option>
+
+  <option value="6">Universe 4</option>
+
+  <option value="7">Database</option>
+
+  <option value="8">Table</option>
+
+  <option value="9">View</option>
+
+  <option value="10">Stored Procedure</option>
+
+  <option value="11">SSRS Report</option>
+
+  <option value="12">SSRS Connection</option>
+
+  <option value="13">OLAP cube</option>
+
+  <option value="14">Database</option>
+
+  <option value="15">Table</option>
+
+  <option value="16">View</option>
+
+  <option value="17">Stored Procedure</option>
+
+  <option value="18">Application</option>
+
+</select></p>
+    <p>
+                <label for="id_name" class="w3-text-teal"><b>Node name</b></label>
+                <input class="w3-input w3-border w3-light-grey" type="text" name="name" maxlength="255" required=""
+                       id="id_name">
+            </p>
+<!--<p><label for="id_name" class="w3-text-teal">Name:</label> <input type="text" name="name" maxlength="255" required="" id="id_name"></p>-->
+<p><label for="id_display_name">Display name:</label> <input type="text" name="display_name" maxlength="100" id="id_display_name"></p>
+<p><label for="id_description">Description:</label> <input type="text" name="description" maxlength="500" id="id_description"></p>
+    <!--<p><input type="submit" value="Register"></p>-->
+    <button type="submit" class="w3-btn w3-teal" value="Register">Save</button>
+</form>
+{% endblock content%}

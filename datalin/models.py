@@ -14,13 +14,15 @@ class Entity(models.Model):
     description = models.CharField(max_length=500, null=True)
     is_storage = models.CharField(max_length=1)
     is_presentation = models.CharField(max_length=1)
-    technology = models.ForeignKey(Technology, on_delete=models.CASCADE)
+    is_application = models.CharField(max_length=1, default='N')
+    technology = models.ForeignKey(Technology, on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:
         unique_together = (('short_name', 'technology'),)
 
     def __str__(self):
-        return self.name
+        # return '{0} - {1}'.format(self.technology.name, self.name)
+        return '{0}'.format(self.name)
 
 class Node(models.Model):
     name = models.CharField(max_length=255, unique=True)
@@ -37,7 +39,7 @@ class Node(models.Model):
 class Application(models.Model):
     node = models.OneToOneField(Node, on_delete=models.CASCADE, primary_key=True)
     owner_name = models.CharField(max_length=255, null=True)
-    contact_email = models.CharField(max_length=255, null=True)
+    contact_email = models.EmailField(max_length=254, null=True)
     is_bi = models.CharField(max_length=1)
 
     def __str__(self):
@@ -53,6 +55,7 @@ class Relation_Type(models.Model):
 class Relation(models.Model):
     node_a = models.ForeignKey(Node, on_delete=models.CASCADE, related_name="node_a")
     relation_type = models.ForeignKey(Relation_Type, on_delete=models.CASCADE)
+    relation_level = models.IntegerField(default=1)
     node_b = models.ForeignKey(Node, on_delete=models.CASCADE, related_name="node_b")
 
     class Meta:
