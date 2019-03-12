@@ -62,4 +62,15 @@ class Relation(models.Model):
         unique_together = (('node_a', 'relation_type', 'node_b'),)
 
     def __str__(self):
+        return '{0} - {1}'.format(self.node_a.display_name, self.node_b.display_name)
+
+class Application_Load(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    display_name = models.CharField(max_length=100, null=True)
+    description = models.CharField(max_length=500, null=True)
+    owner_name = models.CharField(max_length=255, null=True)
+    contact_email = models.CharField(max_length=255, null=True)
+    is_bi = models.CharField(max_length=1)
+
+    def __str__(self):
         return self.name

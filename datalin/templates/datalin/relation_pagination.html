@@ -1,0 +1,58 @@
+{% extends 'datalin/base.html' %}
+
+{% block title %} List of BI relations between nodes per technology and entity {% endblock title %}
+{% block content %}
+    {% if relation_list %}
+         <table class="w3-table w3-bordered w3-striped">
+            <tr class="w3-teal">
+              <th>Node A</th>
+              <th>Node A Entity</th>
+              <th>Node A Technology</th>
+              <th>Relation Type</th>
+              <th>Relation Level</th>
+              <th>Node B</th>
+              <th>Node B Entity</th>
+              <th>Node B Technology</th>
+            </tr>
+            {% for relation in relation_list %}
+             <tr>
+              <td>{{ relation.node_a.display_name }}</td>
+              <td>{{ relation.node_a.entity.name }}</td>
+              <td>{{ relation.node_a.entity.technology.name }}</td>
+              <td>{{ relation.relation_type.name }}</td>
+              <td>{{ relation.relation_level }}</td>
+              <td>{{ relation.node_b.display_name }}</td>
+              <td>{{ relation.node_b.entity.name }}</td>
+              <td>{{ relation.node_b.entity.technology.name }}</td>
+            </tr>
+            {% endfor %}
+         </table>
+    {% else %}
+        <p>No relations are available.</p>
+    {% endif %}
+
+   {% if is_paginated %}
+    <div class="w3-center w3-padding-32">
+         <div class="w3-bar">
+        {% if page_obj.has_previous %}
+             <a class="w3-button w3-hover-black" href="?page={{ page_obj.previous_page_number }}">&laquo;</a>
+             {% else %}
+             <a class="w3-hover-black w3-disabled">&laquo;</a>
+        {% endif %}
+        {% for i in pages %}
+              {% if page_obj.number == i %}
+                <a class="w3-button w3-black" id="pag{{ i }}">{{ i }}</a>
+              {% else %}
+                <a class="w3-button w3-hover-black" href="?page={{ i }}">{{ i }}</a>
+              {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+          <a class="w3-button w3-hover-black" href="?page={{ page_obj.next_page_number }}">&raquo;</a>
+             {% else %}
+             <a class="w3-hover-black w3-disabled">&raquo;</a>
+        {% endif %}
+         </div>
+    </div>
+    {% endif %}
+
+{% endblock content%}

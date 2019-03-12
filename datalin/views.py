@@ -6,6 +6,8 @@ import xlrd, os
 
 from .models import Technology, Entity, Node, Application, Relation, Relation_Type
 from .forms import NodeForm, ApplicationForm, TechnologyForm, EntityForm
+from .filters import RelationFilter, NodeFilter
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 # import ipdb
 
 def index(request):
@@ -96,27 +98,6 @@ class EntityView(generic.ListView):
     def get_queryset(self):
         return Entity.objects.all()
 
-def load_application_from_xlsx():
-
-    xlsx_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),'datalin/data/applications.xlsx')
-    with xlrd.open_workbook(xlsx_path) as wb:
-        sh = wb.sheet_by_name('Sheet1')
-        for row in range(1, sh.nrows):
-            short_name = sh.cell(row, 0)
-            print(short_name.value)
-            node, node_created = Node.objects.get_or_create(
-                name=sh.cell(row, 0).value,
-                display_name=sh.cell(row, 1).value,
-                description=sh.cell(row, 2).value,
-                entity=Entity.objects.get(name='Application'),
-            )
-
-            application, application_created = Application.objects.get_or_create(
-                node_id=node.id,
-                owner_name=sh.cell(row, 4).value,
-                contact_email=sh.cell(row, 5).value,
-                is_bi=sh.cell(row, 6).value,
-            )
 
 class ApplicationView(generic.ListView):
     template_name = 'datalin/applications_list.html'
@@ -125,20 +106,60 @@ class ApplicationView(generic.ListView):
         return Application.objects.all()
 
 
+def load_application_from_xlsx(xlsx_file):
 
-def load_node_from_xlsx():
-
-    xlsx_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),'datalin/data/nodes.xlsx')
-    with xlrd.open_workbook(xlsx_path) as wb:
+    # xlsx_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),'datalin/data/applications.xlsx')
+    # with xlrd.open_workbook(xlsx_path) as wb:
+      with xlrd.open_workbook(filename=None, file_contents=xlsx_file.read()) as wb:
         sh = wb.sheet_by_name('Sheet1')
+        new_rec = 0
         for row in range(1, sh.nrows):
             short_name = sh.cell(row, 0)
             print(short_name.value)
+            try:
+                Node.objects.get(name=sh.cell(row, 0).value)
+            except Node.DoesNotExist:
+                node = Node.objects.create(
+                    name=sh.cell(row, 0).value,
+                    display_name=sh.cell(row, 1).value,
+                    description=sh.cell(row, 2).value,
+                    entity=Entity.objects.get(name='Application'),
+                )
+                Application.objects.create(
+                    node_id=node.id,
+                    owner_name=sh.cell(row, 4).value,
+                    contact_email=sh.cell(row, 5).value,
+                    is_bi=sh.cell(row, 6).value,
+                )
+                new_rec += 1
+        rec_details = {"total_rec":(sh.nrows-1), "new_rec":new_rec}
+        return rec_details
+
+def application_upload(request):
+    if request.method == 'POST' and request.FILES['xlsx_file']:
+        xlsx_file = request.FILES['xlsx_file']
+        rec_details = load_application_from_xlsx(xlsx_file)
+        return render(request, 'datalin/application_upload.html', {
+            'rec_details': rec_details
+        })
+    return render(request, 'datalin/application_upload.html')
+
+
+def load_node_from_xlsx(xlsx_file):
+
+    # xlsx_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),'datalin/data/nodes.xlsx')
+    # with xlrd.open_workbook(xlsx_path) as wb:
+    with xlrd.open_workbook(filename=None, file_contents=xlsx_file.read()) as wb:
+        sh = wb.sheet_by_name('Sheet1')
+        new_rec = 0
+        for row in range(1, sh.nrows):
+            short_name = sh.cell(row, 0)
+            # print(short_name.value)
             technology_xs = sh.cell(row, 4).value
             if len(technology_xs) > 0:
-                print(technology_xs)
+                # print(technology_xs)
                 technology = Technology.objects.get(name=technology_xs)
-                print(technology)
+                # print(technology)
             else:
                 technology = None
                 # entity = Entity.objects.get(name=sh.cell(row, 3).value)
@@ -149,6 +170,20 @@ def load_node_from_xlsx():
                 description=sh.cell(row, 2).value,
                 entity_id=entity.id,
             )
+            new_rec += 1
+
+        rec_details = {"total_rec":(sh.nrows-1),"new_rec":new_rec}
+        return rec_details
+
+def node_upload(request):
+    if request.method == 'POST' and request.FILES['xlsx_file']:
+        xlsx_file = request.FILES['xlsx_file']
+        rec_details = load_node_from_xlsx(xlsx_file)
+        return render(request, 'datalin/node_upload.html', {
+            'rec_details': rec_details
+        })
+    return render(request, 'datalin/node_upload.html')
+
 
 class NodeView(generic.ListView):
     template_name = 'datalin/node_list.html'
@@ -161,36 +196,128 @@ class NodeView(generic.ListView):
         return Node.objects.all()
 
 
-def load_relation_from_xlsx():
+# def nodes(request):
+#
+#     node_list = Node.objects.all()
+#     node_filter = NodeFilter(request.GET, queryset=node_list)
+#
+#     if request.method == 'GET':
+#         if 'btn_form_1' in request.GET:
+#
+#             pagination_form = PaginationForm(request.GET)
+#
+#             if pagination_form.is_valid():
+#                 initial_pagination_size = pagination_form.cleaned_data.get('pagination_size')
+#
+#                 request.session['initial_pagination_size'] = initial_pagination_size
+#
+#
+#
+#         elif 'btn_form_2' in request.GET:
+#
+#             request.session['initial_data_customer'] = request.GET.get("data_customer")
+#
+#
+#
+#     paginator = Paginator(customer_filter.qs, initial_pagination_size)
+#
+#     try:
+#         customers = paginator.page(page)
+#     except PageNotAnInteger:
+#         customers = paginator.page(1)
+#     except EmptyPage:
+#         customers = paginator.page(paginator.num_pages)
+#
+#     context = {
+#         'pagination_form': pagination_form,
+#         'customer_filter': customer_filter,
+#         'customers': customers,
+#     }
+#
+#     return render(request, 'administrator/customers.html', context)
 
-    xlsx_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),'datalin/data/relations.xlsx')
-    with xlrd.open_workbook(xlsx_path) as wb:
+def load_relation_from_xlsx(xlsx_file):
+
+    # xlsx_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),'datalin/data/relations.xlsx')
+    # with xlrd.open_workbook(xlsx_path) as wb:
+    with xlrd.open_workbook(filename=None, file_contents=xlsx_file.read()) as wb:
         sh = wb.sheet_by_name('Sheet1')
+        new_rec = 0
         for row in range(1, sh.nrows):
             node_a = Node.objects.get(name=sh.cell(row, 0).value)
-            print(node_a)
+            # print(node_a)
             relation_type = Relation_Type.objects.get(name=sh.cell(row, 1).value)
-            print(relation_type)
+            # print(relation_type)
             node_b = Node.objects.get(name=sh.cell(row, 3).value)
-            print(node_b)
+            # print(node_b)
             relation, relation_created = Relation.objects.get_or_create(
                 node_a=node_a,
                 relation_type=relation_type,
                 relation_level=sh.cell(row, 2).value,
                 node_b=node_b,
             )
+            new_rec += 1
+
+        rec_details = {"total_rec": (sh.nrows - 1), "new_rec": new_rec}
+        return rec_details
+
+def relation_upload(request):
+    if request.method == 'POST' and request.FILES['xlsx_file']:
+        xlsx_file = request.FILES['xlsx_file']
+        rec_details = load_relation_from_xlsx(xlsx_file)
+        return render(request, 'datalin/relation_upload.html', {
+            'rec_details': rec_details
+        })
+    return render(request, 'datalin/relation_upload.html')
+
 
 class RelationView(generic.ListView):
-    template_name = 'datalin/relation_list.html'
-
+    template_name = 'datalin/relation_pagination.html'
+    paginate_by = 15
     # uncomment if y want to process relation
     # load_relation_from_xlsx()
 
     def get_queryset(self):
-        return Relation.objects.all().order_by('-id')[:200]
+        return Relation.objects.all().order_by('node_a__display_name', 'node_b__display_name')[:200]
+
+    def get_context_data(self, **kwargs):
+        context = super(RelationView, self).get_context_data(**kwargs)
+        if not context.get('is_paginated', False):
+            return context
+
+        paginator = context.get('paginator')
+        num_pages = paginator.num_pages
+        current_page = context.get('page_obj')
+        page_no = current_page.number
+        current_range = (page_no-1)//5
+
+        pages = [x for x in range((current_range*5)+1, min(num_pages + 1,(current_range*5)+6))]
+
+        context.update({'pages': pages})
+        return context
 
 
+def search(request):
 
+    relation_list = Relation.objects.all()
+    relation_filter = RelationFilter(request.GET, queryset=relation_list)
+    page = request.GET.get('page', 1)
+
+    paginator = Paginator(relation_list, 10)
+    try:
+        relations = paginator.page(page)
+    except PageNotAnInteger:
+        relations = paginator.page(1)
+    except EmptyPage:
+        relations = paginator.page(paginator.num_pages)
+
+    return render(request, 'datalin/relation_search_pagination.html', {'relations': relations})
+    # return render(request, 'datalin/relation_search.html', {'filter': relation_filter})
+
+# def search2(request):
+#     node_list = Node.objects.none()
+#     node_filter = NodeFilter(request.GET, queryset=node_list)
+#     return render(request, 'search/node_list.html', {'filter': node_filter})
 
 
 

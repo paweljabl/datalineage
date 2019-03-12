@@ -78,9 +78,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'BI_DataLineage',
-        'USER': 'postgres',
-        'PASSWORD': 'admin',
-        'HOST': '127.0.0.1',
+        'USER': 'a250870',
+        'PASSWORD': 'fB6bYxzX4ltn',
+        'HOST': 'segotl2443.got.volvo.net',
         'PORT': '5432',
     }
 }

@@ -1,0 +1,51 @@
+{% extends 'datalin/base.html' %}
+
+{% block title %}Upload nodes from Excel file{% endblock title %}
+{% block content %}
+<form class="w3-container" method="POST"  enctype="multipart/form-data" id="nodeForm"  >
+    {% csrf_token %}
+
+
+    <div class="w3-cell-row" style="width:75%">
+
+            <p>
+                <label for="id_name" class="w3-text-teal"><b>Choose xlsx file for nodes upload</b></label>
+                <input class="w3-input w3-border w3-light-grey" type="file" name="xlsx_file" maxlength="255" required=""
+                       id="id_name">
+            </p>
+            <button type="submit" class="w3-btn w3-teal" id="submit">Upload</button>
+
+            {% if rec_details %}
+                <p><b>File uploaded successfully; out of {{ rec_details.total_rec }} number of records, {{ rec_details.new_rec }} new records were merged successfully</b></p>
+            {% endif %}
+
+            <p>The Excel file should contain the following fields in Sheet1; example input row provided as as well</p>
+
+            <table class="w3-table w3-bordered w3-striped">
+                <tr class="w3-teal">
+                  <th>NAME (needs to be unique)</th>
+                  <th>DISPLAY_NAME</th>
+                  <th>DESCRIPTION (not mandatory)</th>
+                  <th>ENTITY (name of one of existing entities)</th>
+                  <th>TECHNOLOGY(name of one of existing technologies)</th>
+                </tr>
+                 <tr>
+                  <td>DV_HUB_CONTRACT</td>
+                  <td>HUB_CONTRACT</td>
+                  <td>Data vault Hub</td>
+                  <td>Table</td>
+                  <td>Netezza</td>
+                </tr>
+            </table>
+
+
+        </div>
+
+  <p><a href="{% url 'index' %}">Return to home</a></p>
+
+    </div>
+
+</form>
+
+
+{% endblock %}

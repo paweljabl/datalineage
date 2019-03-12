@@ -1,0 +1,36 @@
+{% extends 'datalin/base.html' %}
+
+{% block title %} List of BI relations between nodes per technology and entity {% endblock title %}
+{% block content %}
+      <form method="get">
+        {{ filter.form.as_p }}
+        <button type="submit">Search</button>
+      </form>
+
+
+      <table class="w3-table w3-bordered w3-striped">
+            <tr class="w3-teal">
+              <th>Node A</th>
+              <th>Node A Entity</th>
+              <th>Node A Technology</th>
+              <th>Relation Type</th>
+              <th>Relation Level</th>
+              <th>Node B</th>
+              <th>Node B Entity</th>
+              <th>Node B Technology</th>
+            </tr>
+            {% for relation in filter.qs %}
+             <tr>
+              <td>{{ relation.node_a.display_name }}</td>
+              <td>{{ relation.node_a.entity.name }}</td>
+              <td>{{ relation.node_a.entity.technology.name }}</td>
+              <td>{{ relation.relation_type.name }}</td>
+              <td>{{ relation.relation_level }}</td>
+              <td>{{ relation.node_b.display_name }}</td>
+              <td>{{ relation.node_b.entity.name }}</td>
+              <td>{{ relation.node_b.entity.technology.name }}</td>
+            </tr>
+            {% endfor %}
+         </table>
+      </ul>
+{% endblock content%}

@@ -1,0 +1,457 @@
+{% extends 'search/base.html' %}
+
+{% block content %}
+
+
+<div >
+
+  <form method="get" id="nodeForm" class="w3-teal" style="margin-top:30px">
+     {% csrf_token %}
+    <div class="w3-container w3-cell">
+        <p>
+        {{ filter.form.name.label_tag }}
+          {{ filter.form.name }}
+            <!--<p>-->
+                <!--filter.form.username.label_tag-->
+                <!--<label for="id_display_name" class="w3-text-white w3-medium" >Name</label>-->
+                <!--<input class="w3-input w3-border w3-light-grey" type="text" name="display_name" maxlength="255" required=""-->
+                       <!--id="id_display_name" required="false">-->
+            </p>
+    </div>
+    <div class="w3-container w3-cell">
+      <p>
+      {{ filter.form.display_name.label_tag }}
+          {{ filter.form.display_name }}
+            <!--<p>-->
+                <!--<label for="id_name" class="w3-text-white w3-medium">Display name</label>-->
+                <!--<input class="w3-input w3-border w3-light-grey" type="text" name="name" maxlength="255" required=""-->
+                       <!--id="id_name" required="false">-->
+           </p>
+    </div>
+    <div class="w3-container w3-cell w3-medium w3-text-white">
+      <p>
+       <!--<p> <br class="w3-text-white w3-medium">-->
+      <button type="submit" class="w3-btn w3-text-white w3-medium" id="search" onclick="w3_open()">Search</button>
+       </p>
+    </div>
+
+  </form>
+
+  <div class="w3-container" id="node_results">
+    <p> Click the line in order to see its lineage</p>
+      <!--<button class="w3-bar-item w3-button w3-small"-->
+    <!--onclick="w3_close()">Close &times;</button>-->
+      <table class="w3-table w3-bordered w3-striped">
+            <tr class="w3-teal">
+              <th>Technology</th>
+              <th>Entity</th>
+              <th>Name</th>
+              <th>Display Name</th>
+              <th>Description</th>
+            </tr>
+            {% for node in filter.qs %}
+             <tr onclick="draw_lineage(this.id)" id={{ node.id }}>
+              <td>{{ node.entity.technology.name }}</td>
+              <td>{{ node.entity.name }}</td>
+              <td>{{ node.name }}</td>
+              <td>{{ node.display_name }}</td>
+              <td>{{ node.description }}</td>
+            </tr>
+            {% endfor %}
+         </table>
+      <!--{% for node in filter.qs %}-->
+        <!--<li onclick="draw_lineage(this.id)" id={{ node.id }}>{{ node.name }} - {{ node.display_name }}</li>-->
+      <!--{% endfor %}-->
+      </div>
+<!--<div class="w3-sidebar w3-bar-block w3-card w3-animate-left" style="display:none;margin-top:60px" id="mySidebar">-->
+  <!--<button class="w3-bar-item w3-button w3-large"-->
+  <!--onclick="w3_close()">Close &times;</button>-->
+  <!--{% for node in filter.qs %}-->
+        <!--<li onclick="draw_lineage(this.id)" id={{ node.id }}>{{ node.name }} - {{ node.display_name }}</li>-->
+      <!--{% endfor %}-->
+   <!--  <a href="#" class="w3-bar-item w3-button">Link 1</a>
+  <a href="#" class="w3-bar-item w3-button">Link 2</a>
+  <a href="#" class="w3-bar-item w3-button">Link 3</a>  -->
+</div>
+  <div class="w3-container" style="margin-top:50px;width:100%;">
+   <!-- Sidebar -->
+      <div class="w3-container w3-cell" style="width:15%">
+        <!--  <form method="get">
+        {{ filter.form.as_p }}
+        <button type="submit" onclick="w3_open()">Search</button>
+      </form>
+      <ul>
+      {% for node in filter.qs %}
+        <li onclick="draw_lineage(this.id)" id={{ node.id }}>{{ node.name }} - {{ node.display_name }}</li>
+      {% endfor %}
+      </ul>-->
+      </div>
+      <div class="w3-container w3-cell" id="lineage_graph">
+        <svg id="svg-canvas" width=2000 height=1500></svg>
+      </div>
+
+  </div>
+
+</div>
+<script src="https://d3js.org/d3.v4.min.js" charset="utf-8"></script>
+<script src="https://dagrejs.github.io/project/dagre-d3/latest/dagre-d3.js"></script>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+
+<script>
+function w3_open() {
+  document.getElementById("main").style.marginLeft = "25%";
+  document.getElementById("mySidebar").style.width = "25%";
+  document.getElementById("mySidebar").style.display = "block";
+  document.getElementById("openNav").style.display = 'none';
+}
+function w3_close() {
+  console.log("here");
+  document.getElementById("node_results").style.marginLeft = "0%";
+  document.getElementById("node_results").style.display = "none";
+  // document.getElementById("openNav").style.display = "inline-block";
+}
+</script>
+
+<script id="js">
+
+function draw_lineage(id) {
+
+console.log(id)
+document.getElementById("node_results").style.marginLeft = "0%";
+document.getElementById("node_results").style.display = "none";
+
+let main_node = id;
+let main_node_parents = new Array();
+let main_node_parent;
+let absorbs, belongs;
+//let nodes = new Array();
+let cluster_group = new Array(), child_group = new Array(), edge_group = new Array(), nodes_group = new Array();
+let edges = new Array();
+let w = 2000, h=1500;
+
+var svg = d3.select("#lineage_graph")
+    .append("svg")
+    .attr("width", w)  //the width value goes here
+    .attr("height", h);  //the height value goes here
+
+// var colors = ['#d9fee5', '#ffecec', '#ecfef2', '#fff8f8', '#fff9d3', '#ffccee', '#eff9ff', '#d7f0ff', '#ffddc0', '#d7eff2', '#ffe8d5', '#c7e9ed', '#eeffcc'
+// , '#ffe5f6', '#ecccff', '#b2e5e5', '#fec0c0', '#ebc1a4', '#e5eef4', '#a8c8e3'];
+
+var colors = ['#BB8FCE', '#F1948A', '#F4D03F', '#EDBB99', '#82E0AA' , '#D6DBDF', '#F8C471', '#A3E4D7', '#AED6F1', '#F39C12', '#5DADE2'
+, '#D98880', '#A2D9CE', '#ecccff', '#b2e5e5', '#ebc1a4', '#e5eef4', '#a8c8e3']
+input_vals = {"node_initial_id" : main_node };
+$.ajax({
+	async: false,
+	type: 'POST',
+	url: "http://localhost:3000/rpc/fn_absorbs_reverse_lean",
+	data: input_vals,
+	dataType: "text",
+	success: function (data) {
+		absorbs = JSON.parse(data);
+	}
+});
+$.ajax({
+	async: false,
+	type: 'POST',
+	url: "http://localhost:3000/rpc/fn_belongs_reverse_lean",
+	data: input_vals,
+	dataType: "text",
+	success: function (data) {
+		belongs = JSON.parse(data);
+	}
+});
+
+
+function render_graph (v) {
+
+	d3.select("svg").remove();
+	var svg = d3.select("#lineage_graph")
+      .append("svg")
+      .attr("width", w)  //the width value goes here
+      .attr("height", h);  //the height value goes here
+
+	// Create the input graph
+	var g = new dagreD3.graphlib.Graph({compound:true})
+	  .setGraph({rankdir: "LR"})
+	  .setDefaultEdgeLabel(function() { return {}; });
+
+	g.graph().rankSep = 3;
+	g.graph().nodeSep = 15;
+
+	g.graph().transition = function transition(selection) { //transition with duration 1000ms
+		return selection.transition().duration(50);
+	};
+
+	(v == undefined) ? initial_structure() : new_structure(v)
+	cluster_group.forEach(function(d) {
+		g.setNode(d.node_id, {label: d.display_name, clusterLabelPos: 'top', style: 'fill: ' + d.cluster_fill, padding: 3, labelStyle: "font-weight: bold; font-size: 12px" });
+	});
+	child_group.forEach(function(d) {
+		g.setNode(d.node_id, {label: d.display_name, padding: 3});
+		g.node(d.node_id).rx = g.node(d.node_id).ry = 5;
+		g.setParent(d.node_id, d.node_id_parent);
+	});
+	edge_group.forEach(function(d) {
+		g.setEdge(d.node_a_id, d.node_b_id)
+	});
+	var render = new dagreD3.render();
+
+	// Set up an SVG group so that we can translate the final graph.
+	var svg = d3.select("svg"),
+		svgGroup = svg.append("g");
+
+	// Run the renderer. This is what draws the final graph.
+	render(d3.select("svg g"), g);
+	// Center the graph
+	//var xCenterOffset = (svg.attr("width") - g.graph().width) / 2;
+	//svgGroup.attr("transform", "translate(" + xCenterOffset + ", 20)");
+	//svg.attr("height", g.graph().height + 40);
+
+	d3.selectAll("g.node,g.cluster").on('click', function (w) {
+		render_graph(w);
+	});
+}
+
+function getRandomColor() {
+  color = "hsl(" + Math.random() * 360 + ", 100%, 75%)";
+  return color;
+}
+
+function get_parent_relation (node_id) {
+	return  belongs.find(obj => {
+		  return obj.node_a_id == node_id
+		})
+}
+
+function concat_main_parent (node_id) {
+	let i, text = "";
+	for (i = main_node_parents.map(function(e) { return e.node_id; }).indexOf(node_id); i < main_node_parents.length; i++) {
+	  text += main_node_parents[i].display_name + ((i == main_node_parents.length - 1) ? "" : " / ");
+	}
+	return text
+}
+
+function fill_cluster_group (node_id, display_name, cluster_fill_input) {
+	let cluster_fill = cluster_fill_input;
+	if (cluster_fill == undefined) {
+		cluster_fill = colors[cluster_group.length];
+	}
+	cluster_group.push({"node_id":node_id, "display_name":display_name, "cluster_fill":cluster_fill });
+}
+
+function fill_child_group (node_id, display_name, node_id_parent) {
+	child_group.push({"node_id":node_id, "display_name":display_name, "node_id_parent":node_id_parent});
+}
+
+function get_existing_node (node_id) {
+	let parent_relation_res, parent_node = node_id;
+	//console.log(parent_node)
+	do {
+		if ( nodes_group.indexOf(parent_node) >= 0 ) {
+			//console.log("found")
+			return parent_node;
+		} else {
+			//console.log("still")
+			parent_relation_res = get_parent_relation(parent_node)
+			if (parent_relation_res !== undefined) {
+				parent_node = parent_relation_res.node_b_id
+			} else {
+				//console.log("this is it - undefined")
+				return undefined
+			}
+		}
+	}
+	while (parent_relation_res !== undefined);
+}
+
+function has_child (node_id) {
+	belongs.some(function (el) {
+		return node_id === el.node_b_id;
+	});
+}
+
+function get_or_create_node (node_id) {
+	let existing_node = get_existing_node(node_id)
+	if (existing_node === undefined) {
+		child_group.push({"node_id":node_id, "display_name":String(node_id)});
+		g.setNode(node_id, {label: String(node_id)});
+		existing_node = node_id;
+		nodes_group.push(existing_node);
+	}
+	return existing_node;
+}
+
+
+function add_child_nodes (node_id) {
+	let child_nodes = belongs.filter(function (el) {return el.node_b_id == node_id;}).map(obj => { return {"node_id":obj.node_a_id, "display_name":obj.display_name_a} });
+	//console.log(child_nodes)
+	child_nodes.forEach (function (d) {
+		if (has_child(node_id)) {
+			fill_cluster_group (d.node_id, d.display_name, undefined )
+		} else {
+			fill_child_group (d.node_id, d.display_name, node_id)
+		}
+	})
+	return child_nodes;
+}
+
+function add_child_edges (child_nodes) {
+	//console.log(child_nodes);
+	let child_edge_group = new Array();
+	child_nodes.forEach (function (d) {
+		let child_out_edges = absorbs.filter(function (el) {return el.node_a_id == d;});
+		child_out_edges.forEach (function (e) {
+			let edge = {"node_a_id":d, "node_b_id":get_or_create_node(e.node_b_id)};
+			if (child_edge_group.indexOf(edge) == -1 ) {
+				child_edge_group.push(edge)
+				g.setEdge(edge.node_a_id, edge.node_b_id);
+			}
+		})
+		let child_in_edges = absorbs.filter(function (el) {return el.node_b_id == d;});
+		child_in_edges.forEach (function (e) {
+			let edge = {"node_a_id":get_or_create_node(e.node_a_id), "node_b_id":d};
+			if (child_edge_group.indexOf(edge) == -1 ) {
+				child_edge_group.push(edge)
+				g.setEdge(edge.node_a_id, edge.node_b_id);
+			}
+		})
+	})
+}
+
+function add_edges (v) {
+	//console.log("add edges: " + v);
+	// let edge_group = new Array();
+	absorbs.forEach (function (d) {
+		//console.log(d)
+		let node_a_id = get_existing_node(d.node_a_id)
+		//console.log(node_a_id)
+		if (node_a_id == v) {
+			//console.log(v + " " + get_existing_node(d.node_b_id));
+			let edge = {"node_a_id":v, "node_b_id":get_existing_node(d.node_b_id)};
+			let existing_edge = edge_group.find(function (e) { return e.node_a_id == edge.node_a_id && e.node_b_id == edge.node_b_id });
+			//console.log("edge_exists: " + existing_edge)
+			if (existing_edge == undefined) {
+				edge_group.push(edge)
+			}
+		}
+		let node_b_id = get_existing_node(d.node_b_id)
+		if (node_b_id == v) {
+			let edge = {"node_a_id":get_existing_node(d.node_a_id), "node_b_id":v};
+			let existing_edge = edge_group.find(function (e) { return e.node_a_id == edge.node_a_id && e.node_b_id == edge.node_b_id });
+			//console.log("edge_exists: " + existing_edge)
+			if (existing_edge == undefined) {
+				edge_group.push(edge)
+			}
+		}
+	})
+}
+
+function initial_structure() {
+	// finding all parents nodes of the main node in parental hierarchy
+	console.log("initial_structure");
+	{
+		let parent_relation_res, i = 1, parent_node = main_node;
+		do {
+			parent_relation_res = get_parent_relation(parent_node)
+			if (parent_relation_res !== undefined) {
+				parent_node = parent_relation_res.node_b_id
+				main_node_parents.push({"node_id":parent_node, "display_name":parent_relation_res.display_name_b})
+			}
+			if (i == 1) main_node_parent = parent_node;
+			i++
+		}
+		while (parent_relation_res !== undefined);
+	}
+
+	belongs.forEach(function (d) {
+		let found = cluster_group.some(function (el) {
+			return el.node_id === d.node_b_id;
+		});
+		if (!found) {
+			if ( !main_node_parents.some(function (el) {return el.node_id === d.node_b_id; }) ) {
+				let parent_relation_res = get_parent_relation(d.node_b_id)
+				if (parent_relation_res === undefined) {
+					fill_cluster_group(d.node_b_id, d.display_name_b, undefined);
+				} else {
+					if ( main_node_parents.some(function (el) {return el.node_id === parent_relation_res.node_b_id; }) ) {
+						let display_name = d.display_name_b + " / " + concat_main_parent(parent_relation_res.node_b_id)
+						fill_cluster_group(d.node_b_id, display_name, undefined);
+					}
+				}
+			}
+		}
+	})
+
+	let display_name = concat_main_parent(main_node_parents[0].node_id)
+	fill_cluster_group(main_node_parents[0].node_id, display_name, undefined);
+
+
+	belongs.forEach(function (d) {
+		if ( main_node_parent === d.node_b_id ) {
+			var found = child_group.some(function (el) {
+				return el.node_id === d.node_a_id;
+			});
+			var found_in_cluster = cluster_group.some(function (el) {
+				return el.node_id === d.node_a_id;
+			});
+			if ((!found) && (!found_in_cluster)) {
+				fill_child_group (d.node_a_id, d.display_name_a, d.node_b_id);
+			}
+		}
+	})
+
+	nodes_group = cluster_group.map(function(e) { return e.node_id; }).concat(child_group.map(function(e) { return e.node_id; }))
+
+	absorbs.forEach(function (d) {
+		let edge = {"node_a_id":get_existing_node(d.node_a_id), "node_b_id":get_existing_node(d.node_b_id)};
+		//console.log(edge);
+		if (edge_group.indexOf(edge) == -1 ) {
+			edge_group.push(edge)
+		}
+	});
+}
+
+function new_structure(v) {
+	console.log("new structure: " + v);
+	let removed_group = new Array();
+	removed_group = child_group.filter(function(d) {return d.node_id_parent == v});
+	child_group = child_group.filter(function(d) {return d.node_id_parent != v});
+	removed_group.forEach(function(e) {
+		edge_group = edge_group.filter(function(d) {return d.node_a_id !== e.node_id && d.node_b_id !== e.node_id});
+	})
+	console.log("removed_group")
+	console.log(removed_group)
+	console.log("child_group")
+	console.log(child_group)
+	nodes_group = cluster_group.map(function(e) { return e.node_id; }).concat(child_group.map(function(e) { return e.node_id; }))
+	//console.log(nodes_group)
+	if (removed_group.length > 0) {
+		add_edges(v);
+	} else {
+	 	let child_nodes = add_child_nodes(v);
+		console.log("child_nodes")
+		console.log(child_nodes)
+		if (child_nodes !== undefined) {
+			console.log("child_group")
+			console.log(child_group)
+			nodes_group = cluster_group.map(function(e) { return e.node_id; }).concat(child_group.map(function(e) { return e.node_id; }))
+			edge_group = edge_group.filter(function(d) {return d.node_a_id != v && d.node_b_id != v});
+			console.log("edge_group");
+			console.log(edge_group);
+			child_nodes.forEach(function (d) {
+				add_edges(d.node_id);
+			})
+		}
+	}
+
+
+}
+
+render_graph(undefined);
+
+}
+
+</script>
+
+{% endblock %}
+

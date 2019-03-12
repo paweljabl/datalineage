@@ -1,9 +1,34 @@
 {% load static %}
 <!DOCTYPE html>
 <html>
-<title>W3.CSS Template</title>
+<title>Data Lineage</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<style id="css">
+	.clusters rect {
+	  fill: #00ffd0;
+	  stroke: #999;
+	  stroke-width: 1.5px;
+	  font-size: 14px;
+	}
+
+	text {
+	  font-weight: 100;
+	  font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
+	  font-size: 10px;
+	}
+
+	.node rect {
+	  stroke: #999;
+	  fill: #fff;
+	  stroke-width: 1.5px;
+	}
+
+	.edgePath path {
+	  stroke: #333;
+	  stroke-width: 1.5px;
+	}
+	</style>
 <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 <link rel="stylesheet" href="https://www.w3schools.com/lib/w3-theme-black.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -47,37 +72,22 @@
   </div>
 </div>
 
-<div class="w3-row" style="margin-top:20px;width:100%;">
-  <!--<div class="w3-twothird w3-container">-->
-    <h2 class="w3-teal w3-center">{% block title %}{% endblock title %}</h2>
-  <!--</div>-->
-</div>
-<div class="w3-container">
-{% block content %} {% endblock content %}
-</div>
+
+
+
+        {% block content %} {% endblock content %}
+
+
 
 <script>
-// Script for side navigation
 function w3_open() {
-  var x = document.getElementById("mySidebar");
-  x.style.width = "300px";
-  x.style.paddingTop = "10%";
-  x.style.display = "block";
+  document.getElementById("mySidebar").style.display = "block";
+  document.getElementById("myOverlay").style.display = "block";
 }
 
-// Close side navigation
 function w3_close() {
   document.getElementById("mySidebar").style.display = "none";
-}
-
-// Used to toggle the menu on smaller screens when clicking on the menu button
-function openNav() {
-  var x = document.getElementById("navDemo");
-  if (x.className.indexOf("w3-show") == -1) {
-    x.className += " w3-show";
-  } else {
-    x.className = x.className.replace(" w3-show", "");
-  }
+  document.getElementById("myOverlay").style.display = "none";
 }
 </script>
 
