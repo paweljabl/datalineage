@@ -16,10 +16,34 @@
             <button type="submit" class="w3-btn w3-teal" id="submit">Upload</button>
 
             {% if rec_details %}
-                <p><b>File uploaded successfully; out of {{ rec_details.total_rec }} number of records, {{ rec_details.new_rec }} new records were merged successfully</b></p>
+                <p><b>File uploaded successfully; out of {{ rec_details.total_rec }} number of records, the following operations happened: </b></p>
+                {% if load_logs %}
+                     <table class="w3-table w3-bordered w3-striped">
+                        <tr class="w3-teal">
+                          <th>Table name</th>
+                          <th>SQL operation</th>
+                          <th>Start Date</th>
+                          <th>Duration (sec)</th>
+                          <th>Row count</th>
+                          <th>Success?</th>
+                        </tr>
+                        {% for log in load_logs %}
+                         <tr>
+                          <td>{{ log.table_name }}</td>
+                          <td>{{ log.sql_operation }}</td>
+                          <td>{{ log.start_timestamp }}</td>
+                          <td>{{ log.duration_seconds }}</td>
+                          <td>{{ log.row_count }}</td>
+                          <td>{{ log.success_flag }}</td>
+                         </tr>
+                        {% endfor %}
+                     </table>
+                {% else %}
+                    <p>Load has failed</p>
+                {% endif %}
             {% endif %}
 
-            <p>The Excel file should contain the following fields in Sheet1; example input row provided as as well</p>
+            <p>The Excel file should contain <b>Nodes</b> sheet and the following fields in it; example input row provided as well:</p>
 
             <table class="w3-table w3-bordered w3-striped">
                 <tr class="w3-teal">

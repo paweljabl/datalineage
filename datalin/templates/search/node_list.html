@@ -31,14 +31,14 @@
     <div class="w3-container w3-cell w3-medium w3-text-white">
       <p>
        <!--<p> <br class="w3-text-white w3-medium">-->
-      <button type="submit" class="w3-btn w3-text-white w3-medium" id="search" onclick="w3_open()">Search</button>
+      <button type="submit" class="w3-btn w3-text-white w3-medium" id="search">Search</button>
        </p>
     </div>
 
   </form>
 
   <div class="w3-container" id="node_results">
-    <p> Click the line in order to see its lineage</p>
+    <p> Type in searched criteria and press search, then click the line of interest in order to see its lineage</p>
       <!--<button class="w3-bar-item w3-button w3-small"-->
     <!--onclick="w3_close()">Close &times;</button>-->
       <table class="w3-table w3-bordered w3-striped">
@@ -97,7 +97,7 @@
 <script src="https://dagrejs.github.io/project/dagre-d3/latest/dagre-d3.js"></script>
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
 
-<script>
+<!--<script>
 function w3_open() {
   document.getElementById("main").style.marginLeft = "25%";
   document.getElementById("mySidebar").style.width = "25%";
@@ -110,7 +110,7 @@ function w3_close() {
   document.getElementById("node_results").style.display = "none";
   // document.getElementById("openNav").style.display = "inline-block";
 }
-</script>
+</script>-->
 
 <script id="js">
 
@@ -144,7 +144,7 @@ input_vals = {"node_initial_id" : main_node };
 $.ajax({
 	async: false,
 	type: 'POST',
-	url: "http://localhost:3000/rpc/fn_absorbs_both_dir_lean",
+	url: "http://segotl2443.got.volvo.net:3001/rpc/fn_absorbs_both_dir_lean",
 	data: input_vals,
 	dataType: "text",
 	success: function (data) {
@@ -154,7 +154,7 @@ $.ajax({
 $.ajax({
 	async: false,
 	type: 'POST',
-	url: "http://localhost:3000/rpc/fn_belongs_lean",
+	url: "http://segotl2443.got.volvo.net:3001/rpc/fn_belongs_lean",
 	data: input_vals,
 	dataType: "text",
 	success: function (data) {
@@ -183,7 +183,11 @@ function render_graph (v) {
 		return selection.transition().duration(50);
 	};
 
+    var date1 =	new Date();
 	(v == undefined) ? initial_structure() : new_structure(v)
+	var date2 =	new Date();
+	console.log(date2 - date1);
+
 	cluster_group.forEach(function(d) {
 		g.setNode(d.node_id, {label: d.display_name, clusterLabelPos: 'top', style: 'fill: ' + d.cluster_fill, padding: 3, labelStyle: "font-weight: bold; font-size: 12px" });
 	});
@@ -211,6 +215,7 @@ function render_graph (v) {
 	d3.selectAll("g.node,g.cluster").on('click', function (w) {
 		render_graph(w);
 	});
+    window.scrollTo(0, 0);
 }
 
 function getRandomColor() {
@@ -325,8 +330,14 @@ function add_edges (v) {
 }
 
 function initial_structure() {
-	// finding all parents nodes of the main node in parental hierarchy
+
+	// finding all parent nodes of the main node in parental hierarchy
 	{
+		let cluster_main_node = belongs.find(obj => {return obj.node_b_id == main_node; })
+		if (cluster_main_node != undefined) {
+			main_node_parents.push({"node_id":main_node, "display_name":cluster_main_node.display_name_b});
+		//	main_node_parent = main_node;
+		}
 		let parent_relation_res, i = 1, parent_node = main_node;
 		do {
 			parent_relation_res = get_parent_relation(parent_node)
@@ -334,7 +345,7 @@ function initial_structure() {
 				parent_node = parent_relation_res.node_b_id
 				main_node_parents.push({"node_id":parent_node, "display_name":parent_relation_res.display_name_b})
 			}
-			if (i == 1) main_node_parent = parent_node;
+			if (i == 1 && main_node_parent == undefined) main_node_parent = parent_node;
 			i++
 		}
 		while (parent_relation_res !== undefined);
@@ -359,9 +370,11 @@ function initial_structure() {
 		}
 	})
 
+    //console.log(belongs);
+    //console.log(main_node_parent);
 	let display_name = concat_main_parent(main_node_parents[0].node_id)
 	fill_cluster_group(main_node_parents[0].node_id, display_name, undefined);
-
+    console.log('here b')
 
 	belongs.forEach(function (d) {
 		if ( main_node_parent === d.node_b_id ) {
@@ -386,6 +399,7 @@ function initial_structure() {
 			edge_group.push(edge)
 		}
 	});
+	console.log(cluster_group);
 }
 
 function new_structure(v) {

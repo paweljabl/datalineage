@@ -1,0 +1,14 @@
+Performing system checks...
+
+System check identified no issues (0 silenced).
+March 15, 2019 - 10:27:36
+Django version 2.1.2, using settings 'datalineage.settings'
+Starting development server at http://127.0.0.1:8000/
+Quit the server with CTRL-BREAK.
+Performing system checks...
+
+System check identified no issues (0 silenced).
+March 15, 2019 - 10:31:03
+Django version 2.1.2, using settings 'datalineage.settings'
+Starting development server at http://127.0.0.1:8000/
+Quit the server with CTRL-BREAK.

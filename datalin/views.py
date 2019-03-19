@@ -2,11 +2,12 @@ from django.views import generic
 from django.shortcuts import render, get_object_or_404, redirect, render_to_response
 from django.urls import reverse, reverse_lazy
 import xlrd, os
+from django.db import connection
 # from django.contrib import messages
 
-from .models import Technology, Entity, Node, Application, Relation, Relation_Type
+from .models import Technology, Entity, Node, Application, Relation, Relation_Type, Application_Load, Load_Log, Node_Load, Relation_Load
 from .forms import NodeForm, ApplicationForm, TechnologyForm, EntityForm
-from .filters import RelationFilter, NodeFilter
+from .filters import RelationFilter, NodeFilter, NodeFilter2
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 # import ipdb
 
@@ -110,37 +111,55 @@ def load_application_from_xlsx(xlsx_file):
 
     # xlsx_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),'datalin/data/applications.xlsx')
     # with xlrd.open_workbook(xlsx_path) as wb:
-      with xlrd.open_workbook(filename=None, file_contents=xlsx_file.read()) as wb:
-        sh = wb.sheet_by_name('Sheet1')
-        new_rec = 0
+    Application_Load.objects.all().delete()
+    with xlrd.open_workbook(filename=None, file_contents=xlsx_file.read()) as wb:
+        sh = wb.sheet_by_name('Apps')
+        instances = []
         for row in range(1, sh.nrows):
-            short_name = sh.cell(row, 0)
-            print(short_name.value)
+            # short_name = sh.cell(row, 0)
+            # print(short_name.value)
+            # print(sh.cell(row, 6).value)
             try:
-                Node.objects.get(name=sh.cell(row, 0).value)
-            except Node.DoesNotExist:
-                node = Node.objects.create(
+                instance = Application_Load(
                     name=sh.cell(row, 0).value,
                     display_name=sh.cell(row, 1).value,
-                    description=sh.cell(row, 2).value,
-                    entity=Entity.objects.get(name='Application'),
-                )
-                Application.objects.create(
-                    node_id=node.id,
+                    entity=sh.cell(row, 2).value,
+                    description=sh.cell(row, 3).value,
                     owner_name=sh.cell(row, 4).value,
                     contact_email=sh.cell(row, 5).value,
                     is_bi=sh.cell(row, 6).value,
                 )
-                new_rec += 1
-        rec_details = {"total_rec":(sh.nrows-1), "new_rec":new_rec}
-        return rec_details
+                instances.append(instance)
+            except Exception as e:
+                print(str(e))
+
+        try:
+            Application_Load.objects.bulk_create(instances)
+        except Exception as e:
+            print(str(e))
+
+        c = connection.cursor()
+        try:
+            c.execute("BEGIN")
+            c.callproc("p_application_load")
+            results = c.fetchall()
+            c.execute("COMMIT")
+        finally:
+            c.close()
+
+
+    rec_details = {"total_rec":(sh.nrows-1), "load_id":results[0][0]}
+    print(rec_details)
+    return rec_details
 
 def application_upload(request):
     if request.method == 'POST' and request.FILES['xlsx_file']:
         xlsx_file = request.FILES['xlsx_file']
         rec_details = load_application_from_xlsx(xlsx_file)
+        load_logs = Load_Log.objects.filter(load_id=rec_details['load_id']).order_by('start_timestamp')
         return render(request, 'datalin/application_upload.html', {
-            'rec_details': rec_details
+            'rec_details': rec_details,
+            'load_logs': load_logs
         })
     return render(request, 'datalin/application_upload.html')
 
@@ -149,38 +168,54 @@ def load_node_from_xlsx(xlsx_file):
 
     # xlsx_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),'datalin/data/nodes.xlsx')
     # with xlrd.open_workbook(xlsx_path) as wb:
+    Node_Load.objects.all().delete()
     with xlrd.open_workbook(filename=None, file_contents=xlsx_file.read()) as wb:
-        sh = wb.sheet_by_name('Sheet1')
-        new_rec = 0
+        sh = wb.sheet_by_name('Nodes')
+        instances = []
         for row in range(1, sh.nrows):
-            short_name = sh.cell(row, 0)
+            # short_name = sh.cell(row, 0)
             # print(short_name.value)
-            technology_xs = sh.cell(row, 4).value
-            if len(technology_xs) > 0:
-                # print(technology_xs)
-                technology = Technology.objects.get(name=technology_xs)
-                # print(technology)
-            else:
-                technology = None
-                # entity = Entity.objects.get(name=sh.cell(row, 3).value)
-            entity = Entity.objects.get(name=sh.cell(row, 3).value, technology=technology)
-            node, node_created = Node.objects.get_or_create(
-                name=sh.cell(row, 0).value,
-                display_name=sh.cell(row, 1).value,
-                description=sh.cell(row, 2).value,
-                entity_id=entity.id,
-            )
-            new_rec += 1
+            # print(sh.cell(row, 6).value)
+            try:
+                instance = Node_Load(
+                    name=sh.cell(row, 0).value,
+                    display_name=sh.cell(row, 1).value,
+                    description=sh.cell(row, 2).value,
+                    entity=sh.cell(row, 3).value,
+                    technology=sh.cell(row, 4).value,
+                )
+                instances.append(instance)
+            except Exception as e:
+                print(str(e))
 
-        rec_details = {"total_rec":(sh.nrows-1),"new_rec":new_rec}
-        return rec_details
+        try:
+            Node_Load.objects.bulk_create(instances)
+        except Exception as e:
+            print(str(e))
+
+        c = connection.cursor()
+        try:
+            c.execute("BEGIN")
+            c.callproc("p_node_load")
+            results = c.fetchall()
+            c.execute("COMMIT")
+        finally:
+            c.close()
+
+    rec_details = {"total_rec": (sh.nrows - 1), "load_id": results[0][0]}
+    print(rec_details)
+    return rec_details
+
 
 def node_upload(request):
+
     if request.method == 'POST' and request.FILES['xlsx_file']:
         xlsx_file = request.FILES['xlsx_file']
         rec_details = load_node_from_xlsx(xlsx_file)
+        load_logs = Load_Log.objects.filter(load_id=rec_details['load_id']).order_by('start_timestamp')
         return render(request, 'datalin/node_upload.html', {
-            'rec_details': rec_details
+            'rec_details': rec_details,
+            'load_logs': load_logs
         })
     return render(request, 'datalin/node_upload.html')
 
@@ -236,37 +271,62 @@ class NodeView(generic.ListView):
 #
 #     return render(request, 'administrator/customers.html', context)
 
+def parse_value(value):
+    # print(field_type)
+    if value == '' or value == ' ':
+        value = None
+    return value
+
 def load_relation_from_xlsx(xlsx_file):
 
-    # xlsx_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),'datalin/data/relations.xlsx')
-    # with xlrd.open_workbook(xlsx_path) as wb:
+    Relation_Load.objects.all().delete()
     with xlrd.open_workbook(filename=None, file_contents=xlsx_file.read()) as wb:
-        sh = wb.sheet_by_name('Sheet1')
-        new_rec = 0
+        sh = wb.sheet_by_name('Relations')
+        instances = []
         for row in range(1, sh.nrows):
-            node_a = Node.objects.get(name=sh.cell(row, 0).value)
-            # print(node_a)
-            relation_type = Relation_Type.objects.get(name=sh.cell(row, 1).value)
-            # print(relation_type)
-            node_b = Node.objects.get(name=sh.cell(row, 3).value)
-            # print(node_b)
-            relation, relation_created = Relation.objects.get_or_create(
-                node_a=node_a,
-                relation_type=relation_type,
-                relation_level=sh.cell(row, 2).value,
-                node_b=node_b,
-            )
-            new_rec += 1
+            # short_name = sh.cell(row, 0)
+            # print(short_name.value)
+            # print(sh.cell(row, 6).value)
+            try:
+                instance = Relation_Load(
+                    node_a=sh.cell(row, 0).value,
+                    relation_type=sh.cell(row, 1).value,
+                    relation_level=parse_value(sh.cell(row, 2).value),
+                    node_b=sh.cell(row, 3).value,
+                )
+                instances.append(instance)
+            except Exception as e:
+                print(str(e))
 
-        rec_details = {"total_rec": (sh.nrows - 1), "new_rec": new_rec}
-        return rec_details
+        print(len(instances))
+
+        try:
+            Relation_Load.objects.bulk_create(instances)
+        except Exception as e:
+            print(str(e))
+
+        c = connection.cursor()
+        try:
+            c.execute("BEGIN")
+            c.callproc("p_relation_load")
+            results = c.fetchall()
+            c.execute("COMMIT")
+        finally:
+            c.close()
+
+    rec_details = {"total_rec": (sh.nrows - 1), "load_id": results[0][0]}
+    print(rec_details)
+    return rec_details
 
 def relation_upload(request):
+
     if request.method == 'POST' and request.FILES['xlsx_file']:
         xlsx_file = request.FILES['xlsx_file']
         rec_details = load_relation_from_xlsx(xlsx_file)
+        load_logs = Load_Log.objects.filter(load_id=rec_details['load_id']).order_by('start_timestamp')
         return render(request, 'datalin/relation_upload.html', {
-            'rec_details': rec_details
+            'rec_details': rec_details,
+            'load_logs': load_logs
         })
     return render(request, 'datalin/relation_upload.html')
 
@@ -313,6 +373,14 @@ def search(request):
 
     return render(request, 'datalin/relation_search_pagination.html', {'relations': relations})
     # return render(request, 'datalin/relation_search.html', {'filter': relation_filter})
+
+def search4(request):
+
+    node_list = Node.objects.select_related('entity__technology').order_by('entity__weight', '-weight', 'name')
+    node_filter = NodeFilter(request.GET, queryset=node_list)
+
+    return render(request, 'search/node_list.html', {'filter': node_filter})
+
 
 # def search2(request):
 #     node_list = Node.objects.none()

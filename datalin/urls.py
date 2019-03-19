@@ -24,4 +24,5 @@ urlpatterns = [
     path('search/', views.search, name='search'),
     # path('search2/', views.search2, name='search2'),
     path('search3/', FilterView.as_view(filterset_class=NodeFilter, template_name='search/node_list.html'), name='search3'),
+    path('search4/',views.search4, name='search4'),
 ]

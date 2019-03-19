@@ -1,7 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html>
-<title>W3.CSS Template</title>
+<title>Data Lineage</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
@@ -31,6 +31,12 @@
       <a href="{% url 'application_upload' %}" class="w3-bar-item w3-button">Applications Upload</a>
       <a href="{% url 'node_upload' %}" class="w3-bar-item w3-button">Nodes Upload</a>
       <a href="{% url 'relation_upload' %}" class="w3-bar-item w3-button">Relatinos Upload</a>
+    </div>
+  </div>
+  <div class="w3-dropdown-hover w3-hide-small">
+    <button class="w3-button" title="Notifications">Visualise<i class="fa fa-caret-down"></i></button>
+    <div class="w3-dropdown-content w3-card-4 w3-bar-block">
+      <a href="{% url 'search4' %}" class="w3-bar-item w3-button">Lineage</a>
     </div>
   </div>
   <a href="{% url 'admin:index' %}" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Admin</a>

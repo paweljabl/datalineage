@@ -85,6 +85,16 @@ DATABASES = {
     }
 }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': 'BI_DataLineage',
+#         'USER': 'postgres',
+#         'PASSWORD': 'admin',
+#         'HOST': '127.0.0.1',
+#         'PORT': '5432',
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
@@ -123,3 +133,43 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# LOGGING = {
+#
+# 'version': 1,
+#
+# 'disable_existing_loggers': False,
+#
+# 'formatters': {
+#
+# 'console': {
+#
+# 'format': '%(levelname)s [%(asctime)s] %(module)s %(message)s'
+#
+# },
+#
+# },
+#
+# 'handlers': {
+#
+#
+#         'console': {
+#             'formatter': 'console',
+#             'class': 'logging.StreamHandler',
+#         },
+#
+#
+# },
+#
+# 'loggers': {
+#
+# 'django': {
+#
+# 'handlers': ['console'],
+# 'level': 'DEBUG',
+#
+# },
+#
+# }
+#
+# }

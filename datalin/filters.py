@@ -8,8 +8,28 @@ class RelationFilter(django_filters.FilterSet):
         model = Relation
         fields = ['node_a', 'relation_type', 'relation_level', 'node_b', ]
 
+class NodeFilter2(django_filters.FilterSet):
+
+    display_name = django_filters.CharFilter(method='search_by_name')
+
+    def search_by_name(self, queryset, name, value):
+        return queryset.filter(Q(display_name=value))
+
+    class Meta:
+        model = Node
+        fields = [
+                    'id',
+                    'name',
+                    'display_name',
+                    'description',
+                    'entity',
+                ]
+
+
 class NodeFilter(django_filters.FilterSet):
+
     display_name = django_filters.CharFilter(lookup_expr='icontains')
+
     class Meta:
         model = Node
         fields = [

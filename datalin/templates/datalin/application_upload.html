@@ -16,17 +16,41 @@
             <button type="submit" class="w3-btn w3-teal" id="submit">Upload</button>
 
             {% if rec_details %}
-                <p><b>File uploaded successfully; out of {{ rec_details.total_rec }} number of records, there were {{ rec_details.new_rec }} new records created</b></p>
+                <p><b>File uploaded successfully; out of {{ rec_details.total_rec }} number of records, the following operations happened: </b></p>
+                {% if load_logs %}
+                     <table class="w3-table w3-bordered w3-striped">
+                        <tr class="w3-teal">
+                          <th>Table name</th>
+                          <th>SQL operation</th>
+                          <th>Start Date</th>
+                          <th>Duration (sec)</th>
+                          <th>Row count</th>
+                          <th>Success?</th>
+                        </tr>
+                        {% for log in load_logs %}
+                         <tr>
+                          <td>{{ log.table_name }}</td>
+                          <td>{{ log.sql_operation }}</td>
+                          <td>{{ log.start_timestamp }}</td>
+                          <td>{{ log.duration_seconds }}</td>
+                          <td>{{ log.row_count }}</td>
+                          <td>{{ log.success_flag }}</td>
+                         </tr>
+                        {% endfor %}
+                     </table>
+                {% else %}
+                    <p>Load has failed</p>
+                {% endif %}
             {% endif %}
 
-            <p>The Excel file should contain the following fields in Sheet1; ; example input rows provided as as well</p>
+        <p>The Excel file should contain <b>Apps</b> sheet and the following fields in it; example input rows provided as well:</p>
 
             <table class="w3-table w3-bordered w3-striped">
                 <tr class="w3-teal">
                   <th>Name</th>
                   <th>Display name</th>
-                  <th>Description</th>
                   <th>Entity</th>
+                  <th>Description</th>
                   <th>Owner name</th>
                   <th>Contact email</th>
                   <th>Is BI?</th>
@@ -34,8 +58,8 @@
                  <tr>
                   <td>CD DW</td>
                   <td>Common Dimension Data Warehouse</td>
-                  <td>Common Information Storage for BI Solutions .Trucks, bus information</td>
                   <td>Application</td>
+                  <td>Common Information Storage for BI Solutions .Trucks, bus information</td>
                   <td>Rafal Busz</td>
                   <td>rafal.busz@volvo.com</td>
                   <td>Y</td>
@@ -43,8 +67,8 @@
                 <tr>
                   <td>VDA</td>
                   <td>Vehicle Data Administration</td>
-                  <td>VDA is the master Data Management solution for the information entity Individual Product. VDA contains vehicle information for Group Trucks, Bus and Penta and machine components for Volvo Construction Equipment</td>
                   <td>Application</td>
+                  <td>VDA is the master Data Management solution for the information entity Individual Product. VDA contains vehicle information for Group Trucks, Bus and Penta and machine components for Volvo Construction Equipment</td>
                   <td>Sumanth Hosur</td>
                   <td>sumanth.hosur.nataraj@volvo.com</td>
                   <td>N</td>
